@@ -1,37 +1,66 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hex Strategy Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="startMenu">
-        <h2>Start Game</h2>
-        <label for="gridSize">Grid Size:</label>
-        <select id="gridSize">
-            <option value="5">Small (5x5)</option>
-            <option value="7">Medium (7x7)</option>
-            <option value="10">Large (10x10)</option>
-        </select><br>
-        <label for="numPlayers">Number of Players:</label>
-        <select id="numPlayers">
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-        </select><br>
-        <button id="startGame">Start Game</button>
+    <div id="startMenu" class="menu">
+        <h1>Hex Strategy Game</h1>
+        <div class="menu-item">
+            <label for="gridSize">Grid Size:</label>
+            <select id="gridSize">
+                <option value="5">Small (5x5)</option>
+                <option value="7">Medium (7x7)</option>
+                <option value="10">Large (10x10)</option>
+            </select>
+        </div>
+        <div class="menu-item">
+            <label for="numPlayers">Number of Players:</label>
+            <select id="numPlayers">
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4">4 Players</option>
+            </select>
+        </div>
+        <button id="startGame" class="button-primary">Start Game</button>
     </div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="ui">
-        <p>Player: <span id="player"></span></p>
-        <p>Wood: <span id="wood"></span></p>
-        <p>Stone: <span id="stone"></span></p>
-        <p>Food: <span id="food"></span></p>
-        <p>Phase: <span id="phase"></span></p>
-        <button id="proceedToAttack">Proceed to Attack</button>
-        <button id="endTurn">End Turn</button>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui" class="game-ui">
+        <div class="player-info">
+            <h2>Player <span id="player">1</span></h2>
+            <div class="resources">
+                <div class="resource">
+                    <img src="assets/wood.png" alt="Wood">
+                    <span id="wood">0</span>
+                </div>
+                <div class="resource">
+                    <img src="assets/stone.png" alt="Stone">
+                    <span id="stone">0</span>
+                </div>
+                <div class="resource">
+                    <img src="assets/food.png" alt="Food">
+                    <span id="food">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-status">
+            <p>Phase: <span id="phase">Setup</span></p>
+            <p>Last Roll: <span id="lastRoll">-</span></p>
+        </div>
+        
+        <div class="actions">
+            <button id="rollDice" class="button-action">Roll Dice</button>
+            <button id="endTurn" class="button-action">End Turn</button>
+        </div>
     </div>
+
     <script src="https://unpkg.com/honeycomb-grid@4.0.0/dist/honeycomb.min.js"></script>
     <script src="game.js"></script>
 </body>

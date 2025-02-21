@@ -1,49 +1,150 @@
-body {
+* {
     margin: 0;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #f0f0f0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-#startMenu {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.menu {
     background: white;
-    padding: 20px;
-    border: 1px solid black;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
+.menu h1 {
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.menu-item {
+    margin: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+select {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.button-primary {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background-color 0.2s;
+}
+
+.button-primary:hover {
+    background-color: #45a049;
+}
+
 #gameCanvas {
+    background: #f8f8f8;
     display: none;
-    border: 1px solid black;
 }
 
-#ui {
-    display: none;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+.game-ui {
+    position: fixed;
+    top: 20px;
+    right: 20px;
     background: white;
-    padding: 10px;
-    border: 1px solid black;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    min-width: 250px;
+    display: none;
 }
 
-button {
-    margin: 5px;
-    padding: 5px 10px;
+.player-info {
+    margin-bottom: 1.5rem;
 }
 
-/* Responsive design for mobile */
-@media (max-width: 600px) {
-    #ui {
-        font-size: 14px;
-    }
-    button {
-        padding: 3px 6px;
+.player-info h2 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.resources {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resource img {
+    width: 24px;
+    height: 24px;
+}
+
+.game-status {
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+}
+
+.game-status p {
+    margin: 0.5rem 0;
+    color: #666;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.button-action {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.button-action:hover {
+    background-color: #1976D2;
+}
+
+.button-action:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .game-ui {
+        position: fixed;
+        bottom: 20px;
+        top: auto;
+        right: 50%;
+        transform: translateX(50%);
+        width: 90%;
     }
 }
