@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Strategy Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui">
+        <p>Player <span id="currentPlayer">1</span>'s Turn</p>
+        <p>Resources: Wood: <span id="wood">0</span>, Stone: <span id="stone">0</span>, Food: <span id="food">0</span></p>
+        <button id="rollDice">Roll Dice</button>
+        <button id="buildSettlement">Build Settlement (2W, 1S)</button>
+        <button id="buildArmy">Build Army (1F, 1W)</button>
+        <button id="endTurn">End Turn</button>
+    </div>
+    <script src="https://unpkg.com/honeycomb-grid@4.0.0/dist/honeycomb.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
