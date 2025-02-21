@@ -1,22 +1,16 @@
 // game.js
 class Game {
     constructor() {
+        // Get canvas element first
         this.canvas = document.getElementById('gameCanvas');
-        this.ctx = canvas.getContext('2d');
-        this.assets = {}
-
-// Initialize game when page loads
-window.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing game');
-    try {
-        const game = new Game();
-        game.init().catch(err => {
-            console.error('Error initializing game:', err);
-        });
-    } catch (err) {
-        console.error('Error creating game:', err);
-    }
-});;
+        if (!this.canvas) {
+            console.error('Canvas element not found!');
+            return;
+        }
+        
+        // Then get the context using this.canvas
+        this.ctx = this.canvas.getContext('2d');
+        this.assets = {};
         this.state = {
             players: [],
             currentPlayer: 0,
@@ -587,9 +581,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 }
 
-// Initialize game when page loads
-window.addEventListener('load', () => {
-    const game = new Game();
-    game.init();
+//  initialization code
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing game');
+    try {
+        const game = new Game();
+        if (game.canvas) {  // Only initialize if canvas was found
+            game.init().catch(err => {
+                console.error('Error initializing game:', err);
+            });
+        }
+    } catch (err) {
+        console.error('Error creating game:', err);
+    }
 });
-}

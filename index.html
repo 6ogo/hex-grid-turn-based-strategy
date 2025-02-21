@@ -19,7 +19,7 @@
         </div>
         <div class="menu-item">
             <label for="numPlayers">Number of Players:</label>
-            <select id="numPlayers" onchange="updatePlayerFields()">
+            <select id="numPlayers">
                 <option value="2">2 Players</option>
                 <option value="3">3 Players</option>
                 <option value="4">4 Players</option>
@@ -59,8 +59,8 @@
         
         <div class="actions">
             <button id="rollDice" class="button-action">Roll Dice</button>
-            <button id="buildArmy" class="button-action" disabled>Build Army (2 Food)</button>
-            <button id="buildSettlement" class="button-action" disabled>Build Settlement (2 Wood, 1 Stone)</button>
+            <button id="buildArmy" class="button-action">Build Army (2 Food)</button>
+            <button id="buildSettlement" class="button-action">Build Settlement (2 Wood, 1 Stone)</button>
             <button id="endTurn" class="button-action">End Turn</button>
         </div>
 
@@ -69,7 +69,10 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/honeycomb-grid@4.0.0/dist/honeycomb.min.js"></script>
+    <!-- Load Honeycomb library first -->
+    <script src="https://cdn.jsdelivr.net/npm/honeycomb-grid@3.1.8/dist/honeycomb.min.js"></script>
+    
+    <!-- Then load your game code -->
     <script src="game.js"></script>
 </body>
 </html>
