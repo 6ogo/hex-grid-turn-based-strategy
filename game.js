@@ -6,9 +6,16 @@ class Game {
         this.assets = {}
 
 // Initialize game when page loads
-window.addEventListener('load', () => {
-    const game = new Game();
-    game.init();
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing game');
+    try {
+        const game = new Game();
+        game.init().catch(err => {
+            console.error('Error initializing game:', err);
+        });
+    } catch (err) {
+        console.error('Error creating game:', err);
+    }
 });;
         this.state = {
             players: [],
@@ -76,9 +83,18 @@ window.addEventListener('load', () => {
     }
 
     setupPlayerFields() {
+        console.log('Setting up player fields');
+        
         const updateFields = () => {
+            console.log('Updating player fields');
             const numPlayers = parseInt(document.getElementById('numPlayers').value);
             const container = document.getElementById('playerSetup');
+            
+            if (!container) {
+                console.error('Player setup container not found!');
+                return;
+            }
+            
             container.innerHTML = '';
             
             for (let i = 0; i < numPlayers; i++) {
@@ -92,7 +108,14 @@ window.addEventListener('load', () => {
             }
         };
 
-        document.getElementById('numPlayers').addEventListener('change', updateFields);
+        const numPlayersSelect = document.getElementById('numPlayers');
+        if (!numPlayersSelect) {
+            console.error('Number of players select not found!');
+            return;
+        }
+        
+        numPlayersSelect.addEventListener('change', updateFields);
+        // Initial setup
         updateFields();
     }
 
@@ -108,7 +131,19 @@ window.addEventListener('load', () => {
     }
 
     setupUIHandlers() {
-        document.getElementById('startGame').addEventListener('click', () => {
+        // Debug log to verify handler is being set up
+        console.log('Setting up UI handlers');
+        
+        const startButton = document.getElementById('startGame');
+        if (!startButton) {
+            console.error('Start button not found!');
+            return;
+        }
+        
+        startButton.onclick = (e) => {
+            e.preventDefault();
+            console.log('Start button clicked');
+            
             const gridSize = parseInt(document.getElementById('gridSize').value);
             const numPlayers = parseInt(document.getElementById('numPlayers').value);
             const players = [];
@@ -119,8 +154,9 @@ window.addEventListener('load', () => {
                 players.push({ name, color });
             }
             
+            console.log('Starting game with:', { gridSize, numPlayers, players });
             this.startGame(gridSize, players);
-        });
+        };
 
         document.getElementById('rollDice').addEventListener('click', () => {
             if (this.state.phase === 'RESOURCE_COLLECTION') {
@@ -535,9 +571,14 @@ window.addEventListener('load', () => {
         // Update buttons based on phase and resources
         const buildArmyBtn = document.getElementById('buildArmy');
         const buildSettlementBtn = document.getElementById('buildSettlement');
+        const rollDiceBtn = document.getElementById('rollDice');
         
-        buildArmyBtn.disabled = player.resources.food < this.BUILDING_COSTS.army.food;
-        buildSettlementBtn.disabled = player.resources.wood < this.BUILDING_COSTS.settlement.wood || 
+        // Enable/disable buttons based on phase and resources
+        rollDiceBtn.disabled = this.state.phase !== 'RESOURCE_COLLECTION';
+        buildArmyBtn.disabled = this.state.phase !== 'ACTION' || 
+                               player.resources.food < this.BUILDING_COSTS.army.food;
+        buildSettlementBtn.disabled = this.state.phase !== 'ACTION' || 
+                                    player.resources.wood < this.BUILDING_COSTS.settlement.wood || 
                                     player.resources.stone < this.BUILDING_COSTS.settlement.stone;
     }
 
@@ -551,3 +592,4 @@ window.addEventListener('load', () => {
     const game = new Game();
     game.init();
 });
+}
