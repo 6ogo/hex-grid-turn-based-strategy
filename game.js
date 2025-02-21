@@ -437,11 +437,12 @@ class HexGame {
 
     // Convert point to hex coordinates using Honeycomb.Point and Hex.fromPoint
     const point = Honeycomb.Point(gridX, gridY);
-    const hex = this.Hex().fromPoint(point);
+    const fractionalHex = this.Hex().fromPoint(point);
+    const roundedHex = fractionalHex.round();
 
     // Find the tile using the rounded hex coordinates
-    const clickedTile = this.board.tiles.find(
-      (tile) => tile.hex.x === hex.x && tile.hex.y === hex.y
+    const clickedTile = this.board.tiles.find((tile) =>
+      tile.hex.equals(roundedHex)
     );
 
     if (!clickedTile) return;
@@ -468,7 +469,7 @@ class HexGame {
     }
     this.render();
   }
-  
+
   isPointInHex(x, y, corners) {
     let inside = false;
     for (let i = 0, j = corners.length - 1; i < corners.length; j = i++) {
@@ -487,6 +488,21 @@ class HexGame {
       return;
     }
 
+    // Check if the selected hex is adjacent to any owned hex
+    const neighbors = this.board.getNeighbors(tile.hex);
+    const isAdjacentToOwned = neighbors.some((neighbor) => {
+      const neighborTile = this.board.getTileAt(neighbor);
+      return neighborTile && neighborTile.owner !== null;
+    });
+
+    if (isAdjacentToOwned) {
+      this.ui.showMessage(
+        "Cannot choose a hex adjacent to another player's starting hex!",
+        true
+      );
+      return;
+    }
+
     const player = this.players[this.currentPlayer];
     player.addHex(tile);
     tile.armies = 1;
@@ -501,7 +517,7 @@ class HexGame {
     }
     this.updateUI();
   }
-
+  
   handleBuildArmy(tile) {
     const player = this.players[this.currentPlayer];
     if (tile.owner !== player.id) {
@@ -719,15 +735,6 @@ class HexGame {
       const size = this.HEX_SIZE;
       const hexWidth = 2 * size;
       const hexHeight = Math.sqrt(3) * size;
-      const imgX = point.x - hexWidth / 2;
-      const imgY = point.y - hexHeight / 2;
-      this.ctx.drawImage(
-        this.assets[tile.type],
-        imgX,
-        imgY,
-        hexWidth,
-        hexHeight
-      );
 
       // Draw hex outline
       this.ctx.beginPath();
@@ -751,15 +758,15 @@ class HexGame {
       this.ctx.closePath();
       this.ctx.clip();
 
-      const imageSize = Math.sqrt(3) * size;
-      const imageX = point.x - imageSize / 2;
-      const imageY = point.y - imageSize / 2;
+      // Adjust the image size to match the hex dimensions
+      const imageX = point.x - hexWidth / 2;
+      const imageY = point.y - hexHeight / 2;
       this.ctx.drawImage(
         this.assets[tile.type],
         imageX,
         imageY,
-        imageSize,
-        imageSize
+        hexWidth,
+        hexHeight
       );
       this.ctx.restore();
 
