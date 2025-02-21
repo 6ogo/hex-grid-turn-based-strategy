@@ -25,57 +25,57 @@
                 <option value="4">4 Players</option>
             </select>
         </div>
-        <div id="playerSetup" class="player-setup">
-            <!-- Player setup fields will be generated dynamically -->
-        </div>
+        <div id="playerSetup" class="player-setup"></div>
         <button id="startGame" class="button-primary">Start Game</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
-    <div id="ui" class="game-ui">
-        <div class="player-info">
-            <h2 id="playerName">Player Name</h2>
-            <div class="resources">
-                <div class="resource">
-                    <img src="assets/wood.png" alt="Wood">
-                    <span id="wood">0</span>
+    <div id="gameUI" class="game-ui">
+        <div class="game-controls">
+            <div class="player-info">
+                <h2 id="playerName">Player Name</h2>
+                <div class="resources">
+                    <div class="resource">
+                        <img src="assets/wood.png" alt="Wood" class="resource-icon">
+                        <span id="wood">0</span>
+                    </div>
+                    <div class="resource">
+                        <img src="assets/stone.png" alt="Stone" class="resource-icon">
+                        <span id="stone">0</span>
+                    </div>
+                    <div class="resource">
+                        <img src="assets/food.png" alt="Food" class="resource-icon">
+                        <span id="food">0</span>
+                    </div>
                 </div>
-                <div class="resource">
-                    <img src="assets/stone.png" alt="Stone">
-                    <span id="stone">0</span>
-                </div>
-                <div class="resource">
-                    <img src="assets/food.png" alt="Food">
-                    <span id="food">0</span>
-                </div>
+            </div>
+            
+            <div class="game-status">
+                <p>Phase: <span id="phase">Setup</span></p>
+                <p>Last Roll: <span id="lastRoll">-</span></p>
             </div>
         </div>
         
-        <div class="game-status">
-            <p>Phase: <span id="phase">Setup</span></p>
-            <p>Last Roll: <span id="lastRoll">-</span></p>
-        </div>
-        
-        <div class="actions">
-            <button id="rollDice" class="button-action">Roll Dice</button>
-            <button id="buildArmy" class="button-action">Build Army (2 Food)</button>
-            <button id="buildSettlement" class="button-action">Build Settlement (2 Wood, 1 Stone)</button>
-            <button id="moveArmy" class="button-action">Move Army</button>
-            <button id="attack" class="button-action">Attack</button>
-            <button id="undo" class="button-action">Undo</button>
-            <button id="endTurn" class="button-action">End Turn</button>
-        </div>
+        <div class="action-container">
+            <div class="actions">
+                <button id="rollDice" class="button-action">Roll Dice</button>
+                <button id="buildArmy" class="button-action">Build Army (2 Food)</button>
+                <button id="buildSettlement" class="button-action">Build Settlement (2 Wood, 1 Stone)</button>
+                <button id="expandTerritory" class="button-action">Expand Territory (5 Wood, 5 Stone)</button>
+                <button id="moveArmy" class="button-action">Move Army (Once per turn)</button>
+                <button id="attack" class="button-action">Attack</button>
+                <button id="undo" class="button-action">Undo</button>
+                <button id="endTurn" class="button-action">End Turn</button>
+            </div>
 
-        <div id="actionInfo" class="action-info">
-            Select a hex to perform actions
+            <div id="actionInfo" class="action-info">
+                Select a hex to perform actions
+            </div>
         </div>
     </div>
 
-    <!-- Load Honeycomb library first -->
     <script src="https://cdn.jsdelivr.net/npm/honeycomb-grid@3.1.8/dist/honeycomb.min.js"></script>
-    
-    <!-- Then load your game code -->
     <script src="game.js"></script>
 </body>
 </html>
