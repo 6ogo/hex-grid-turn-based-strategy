@@ -18,28 +18,28 @@ const COSTS = {
 
 class HexBoard {
   constructor(hexFactory, gridSize) {
-      this.factory = hexFactory;
-      this.grid = Honeycomb.defineGrid(hexFactory).rectangle({
-          width: gridSize,
-          height: gridSize,
-      });
-      this.tiles = this.initializeTiles();
-      this.scale = 1;
+    this.factory = hexFactory;
+    this.grid = Honeycomb.defineGrid(hexFactory).rectangle({
+      width: gridSize,
+      height: gridSize,
+    });
+    this.tiles = this.initializeTiles();
+    this.scale = 1;
   }
 
   initializeTiles() {
-      return Array.from(this.grid).map((hex) => ({
-          hex,
-          type: ["grass", "forest", "mountain"][Math.floor(Math.random() * 3)],
-          resourceValue: Math.floor(Math.random() * 6) + 1,
-          owner: null,
-          armies: 0,
-          settlement: false,
-      }));
+    return Array.from(this.grid).map((hex) => ({
+      hex,
+      type: ["grass", "forest", "mountain"][Math.floor(Math.random() * 3)],
+      resourceValue: Math.floor(Math.random() * 6) + 1,
+      owner: null,
+      armies: 0,
+      settlement: false,
+    }));
   }
 
   getTileAt(hex) {
-      return this.tiles.find(t => t.hex.equals(hex));
+    return this.tiles.find((t) => t.hex.equals(hex));
   }
 
   getNeighbors(hex) {
@@ -196,7 +196,7 @@ class HexGame {
     }
   }
 
-constructor() {
+  constructor() {
     this.canvas = document.getElementById("gameCanvas");
     this.ctx = this.canvas.getContext("2d");
     this.HEX_SIZE = 50;
@@ -205,11 +205,11 @@ constructor() {
     this.players = [];
     this.currentPlayer = 0;
     this.state = {
-        phase: PHASES.SETUP_SELECTION,
-        selectedHex: null,
-        moveFrom: null,
-        dice: { die1: null, die2: null },
-        setupPlayers: [],
+      phase: PHASES.SETUP_SELECTION,
+      selectedHex: null,
+      moveFrom: null,
+      dice: { die1: null, die2: null },
+      setupPlayers: [],
     };
     this.ui = new UI();
     this.previousState = null;
@@ -217,14 +217,14 @@ constructor() {
 
     // Initialize Hex factory
     this.Hex = Honeycomb.extendHex({
-        size: this.HEX_SIZE,
-        orientation: 'flat'
+      size: this.HEX_SIZE,
+      orientation: "flat",
     });
 
     this.canvas.addEventListener("click", (e) => this.handleClick(e));
     this.setupUIHandlers();
     this.setupPlayerFields();
-}
+  }
 
   async init() {
     await this.loadAssets();
@@ -436,12 +436,12 @@ constructor() {
     const gridY = (mouseY - this.canvas.height / 2) / this.board.scale;
 
     // Convert point to hex coordinates
-    const hex = this.Hex().pointToCoordinates({ x: gridX, y: gridY });
-    const roundedHex = this.Hex().round(hex);
+    const point = Honeycomb.Point(gridX, gridY);
+    const hex = this.Hex().fromPoint(point);
 
     // Find the tile using the rounded hex coordinates
     const clickedTile = this.board.tiles.find(
-      (tile) => tile.hex.x === roundedHex.x && tile.hex.y === roundedHex.y
+      (tile) => tile.hex.x === hex.x && tile.hex.y === hex.y
     );
 
     if (!clickedTile) return;
