@@ -11,36 +11,35 @@ const PHASES = {
 };
 
 const COSTS = {
-  settlement: { wood: 2, stone: 1 },
-  army: { food: 2 },
-  territory: { wood: 5, stone: 5 },
+  settlement: { wood: 5, stone: 5 },
+  army: { food: 10 },
+  territory: { wood: 3, stone: 2 },
 };
 
 class HexBoard {
   constructor(hexFactory, gridSize) {
-    this.factory = hexFactory;
-    this.gridFactory = Honeycomb.defineGrid(hexFactory);
-    this.grid = this.gridFactory.rectangle({
-      width: gridSize,
-      height: gridSize,
-    });
-    this.tiles = this.initializeTiles();
-    this.scale = 1;
+      this.factory = hexFactory;
+      this.grid = Honeycomb.defineGrid(hexFactory).rectangle({
+          width: gridSize,
+          height: gridSize,
+      });
+      this.tiles = this.initializeTiles();
+      this.scale = 1;
   }
 
   initializeTiles() {
-    return Array.from(this.grid).map((hex) => ({
-      hex,
-      type: ["grass", "forest", "mountain"][Math.floor(Math.random() * 3)],
-      resourceValue: Math.floor(Math.random() * 6) + 1,
-      owner: null,
-      armies: 0,
-      settlement: false,
-    }));
+      return Array.from(this.grid).map((hex) => ({
+          hex,
+          type: ["grass", "forest", "mountain"][Math.floor(Math.random() * 3)],
+          resourceValue: Math.floor(Math.random() * 6) + 1,
+          owner: null,
+          armies: 0,
+          settlement: false,
+      }));
   }
 
   getTileAt(hex) {
-    return this.tiles.find((t) => t.hex.equals(hex));
+      return this.tiles.find(t => t.hex.equals(hex));
   }
 
   getNeighbors(hex) {
@@ -196,7 +195,8 @@ class HexGame {
       });
     }
   }
-  constructor() {
+
+constructor() {
     this.canvas = document.getElementById("gameCanvas");
     this.ctx = this.canvas.getContext("2d");
     this.HEX_SIZE = 50;
@@ -205,20 +205,26 @@ class HexGame {
     this.players = [];
     this.currentPlayer = 0;
     this.state = {
-      phase: PHASES.SETUP_SELECTION,
-      selectedHex: null,
-      moveFrom: null,
-      dice: { die1: null, die2: null },
-      setupPlayers: [],
+        phase: PHASES.SETUP_SELECTION,
+        selectedHex: null,
+        moveFrom: null,
+        dice: { die1: null, die2: null },
+        setupPlayers: [],
     };
     this.ui = new UI();
     this.previousState = null;
     this.animationFrameId = null;
 
+    // Initialize Hex factory
+    this.Hex = Honeycomb.extendHex({
+        size: this.HEX_SIZE,
+        orientation: 'flat'
+    });
+
     this.canvas.addEventListener("click", (e) => this.handleClick(e));
     this.setupUIHandlers();
     this.setupPlayerFields();
-  }
+}
 
   async init() {
     await this.loadAssets();
@@ -422,18 +428,21 @@ class HexGame {
 
   handleClick(event) {
     const rect = this.canvas.getBoundingClientRect();
-    const clickX =
-      (event.clientX - rect.left - this.canvas.width / 2) / this.board.scale;
-    const clickY =
-      (event.clientY - rect.top - this.canvas.height / 2) / this.board.scale;
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
 
-    const clickedTile = this.board.tiles.find((tile) => {
-      const corners = tile.hex.corners().map((corner) => ({
-        x: corner.x + tile.hex.toPoint().x,
-        y: corner.y + tile.hex.toPoint().y,
-      }));
-      return this.isPointInHex(clickX, clickY, corners);
-    });
+    // Convert canvas coordinates to hex grid coordinates
+    const gridX = (mouseX - this.canvas.width / 2) / this.board.scale;
+    const gridY = (mouseY - this.canvas.height / 2) / this.board.scale;
+
+    // Convert point to hex coordinates
+    const hex = this.Hex().pointToCoordinates({ x: gridX, y: gridY });
+    const roundedHex = this.Hex().round(hex);
+
+    // Find the tile using the rounded hex coordinates
+    const clickedTile = this.board.tiles.find(
+      (tile) => tile.hex.x === roundedHex.x && tile.hex.y === roundedHex.y
+    );
 
     if (!clickedTile) return;
 
@@ -708,6 +717,17 @@ class HexGame {
       const point = tile.hex.toPoint();
       const corners = tile.hex.corners();
       const size = this.HEX_SIZE;
+      const hexWidth = 2 * size;
+      const hexHeight = Math.sqrt(3) * size;
+      const imgX = point.x - hexWidth / 2;
+      const imgY = point.y - hexHeight / 2;
+      this.ctx.drawImage(
+        this.assets[tile.type],
+        imgX,
+        imgY,
+        hexWidth,
+        hexHeight
+      );
 
       // Draw hex outline
       this.ctx.beginPath();
