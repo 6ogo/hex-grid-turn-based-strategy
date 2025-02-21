@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,11 +19,14 @@
         </div>
         <div class="menu-item">
             <label for="numPlayers">Number of Players:</label>
-            <select id="numPlayers">
+            <select id="numPlayers" onchange="updatePlayerFields()">
                 <option value="2">2 Players</option>
                 <option value="3">3 Players</option>
                 <option value="4">4 Players</option>
             </select>
+        </div>
+        <div id="playerSetup" class="player-setup">
+            <!-- Player setup fields will be generated dynamically -->
         </div>
         <button id="startGame" class="button-primary">Start Game</button>
     </div>
@@ -33,7 +35,7 @@
 
     <div id="ui" class="game-ui">
         <div class="player-info">
-            <h2>Player <span id="player">1</span></h2>
+            <h2 id="playerName">Player Name</h2>
             <div class="resources">
                 <div class="resource">
                     <img src="assets/wood.png" alt="Wood">
@@ -57,7 +59,13 @@
         
         <div class="actions">
             <button id="rollDice" class="button-action">Roll Dice</button>
+            <button id="buildArmy" class="button-action" disabled>Build Army (2 Food)</button>
+            <button id="buildSettlement" class="button-action" disabled>Build Settlement (2 Wood, 1 Stone)</button>
             <button id="endTurn" class="button-action">End Turn</button>
+        </div>
+
+        <div id="actionInfo" class="action-info">
+            Select a hex to perform actions
         </div>
     </div>
 

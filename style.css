@@ -1,3 +1,4 @@
+/* style.css */
 * {
     margin: 0;
     padding: 0;
@@ -20,6 +21,8 @@ body {
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     text-align: center;
+    max-width: 600px;
+    width: 90%;
 }
 
 .menu h1 {
@@ -32,6 +35,36 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.player-setup {
+    margin: 2rem 0;
+}
+
+.player-field {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+
+.player-field input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.player-field input[type="color"] {
+    width: 50px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 select {
@@ -70,7 +103,7 @@ select {
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-    min-width: 250px;
+    min-width: 300px;
     display: none;
 }
 
@@ -79,8 +112,10 @@ select {
 }
 
 .player-info h2 {
-    color: #333;
     margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    text-align: center;
 }
 
 .resources {
@@ -94,6 +129,9 @@ select {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    background: #f8f8f8;
+    padding: 0.5rem;
+    border-radius: 4px;
 }
 
 .resource img {
@@ -129,13 +167,22 @@ select {
     transition: background-color 0.2s;
 }
 
-.button-action:hover {
+.button-action:hover:not(:disabled) {
     background-color: #1976D2;
 }
 
 .button-action:disabled {
     background-color: #ccc;
     cursor: not-allowed;
+}
+
+.action-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f8f8;
+    border-radius: 4px;
+    text-align: center;
+    color: #666;
 }
 
 @media (max-width: 768px) {
