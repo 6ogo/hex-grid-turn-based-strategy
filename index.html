@@ -2,18 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hex Strategy Game</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div id="startMenu">
+        <h2>Start Game</h2>
+        <label for="gridSize">Grid Size:</label>
+        <select id="gridSize">
+            <option value="5">Small (5x5)</option>
+            <option value="7">Medium (7x7)</option>
+            <option value="10">Large (10x10)</option>
+        </select><br>
+        <label for="numPlayers">Number of Players:</label>
+        <select id="numPlayers">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select><br>
+        <button id="startGame">Start Game</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
     <div id="ui">
-        <p>Player <span id="currentPlayer">1</span>'s Turn</p>
-        <p>Resources: Wood: <span id="wood">0</span>, Stone: <span id="stone">0</span>, Food: <span id="food">0</span></p>
-        <button id="rollDice">Roll Dice</button>
-        <button id="buildSettlement">Build Settlement (2W, 1S)</button>
-        <button id="buildArmy">Build Army (1F, 1W)</button>
+        <p>Player: <span id="player"></span></p>
+        <p>Wood: <span id="wood"></span></p>
+        <p>Stone: <span id="stone"></span></p>
+        <p>Food: <span id="food"></span></p>
+        <p>Phase: <span id="phase"></span></p>
+        <button id="proceedToAttack">Proceed to Attack</button>
         <button id="endTurn">End Turn</button>
     </div>
     <script src="https://unpkg.com/honeycomb-grid@4.0.0/dist/honeycomb.min.js"></script>
