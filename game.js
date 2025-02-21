@@ -435,7 +435,7 @@ class HexGame {
     const gridX = (mouseX - this.canvas.width / 2) / this.board.scale;
     const gridY = (mouseY - this.canvas.height / 2) / this.board.scale;
 
-    // Convert point to hex coordinates
+    // Convert point to hex coordinates using Honeycomb.Point and Hex.fromPoint
     const point = Honeycomb.Point(gridX, gridY);
     const hex = this.Hex().fromPoint(point);
 
@@ -468,7 +468,7 @@ class HexGame {
     }
     this.render();
   }
-
+  
   isPointInHex(x, y, corners) {
     let inside = false;
     for (let i = 0, j = corners.length - 1; i < corners.length; j = i++) {
