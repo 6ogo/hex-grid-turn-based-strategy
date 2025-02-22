@@ -4,78 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hex Strategy Game</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Include Phaser library -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
 </head>
 <body>
-    <div id="startMenu" class="menu">
+    <!-- Start Menu -->
+    <div id="startMenu">
         <h1>Hex Strategy Game</h1>
-        <div class="menu-item">
+        <form id="gameSetup">
             <label for="gridSize">Grid Size:</label>
             <select id="gridSize">
-                <option value="5">Small (5x5)</option>
-                <option value="7">Medium (7x7)</option>
-                <option value="10">Large (10x10)</option>
-            </select>
-        </div>
-        <div class="menu-item">
+                <option value="5">5x5</option>
+                <option value="7">7x7</option>
+                <option value="9">9x9</option>
+            </select><br><br>
             <label for="numPlayers">Number of Players:</label>
             <select id="numPlayers">
-                <option value="2">2 Players</option>
-                <option value="3">3 Players</option>
-                <option value="4">4 Players</option>
-            </select>
-        </div>
-        <div id="playerSetup" class="player-setup"></div>
-        <button id="startGame" class="button-primary">Start Game</button>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select><br><br>
+            <div id="playerSetup"></div>
+            <button id="startGame">Start Game</button>
+        </form>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <!-- Game Canvas -->
+    <div id="gameCanvas" style="display: none;"></div>
 
-    <div id="gameUI" class="game-ui">
-        <div class="game-controls">
-            <div class="player-info">
-                <h2 id="playerName">Player Name</h2>
-                <div class="resources">
-                    <div class="resource">
-                        <img src="assets/wood.png" alt="Wood" class="resource-icon">
-                        <span id="wood">0</span>
-                    </div>
-                    <div class="resource">
-                        <img src="assets/stone.png" alt="Stone" class="resource-icon">
-                        <span id="stone">0</span>
-                    </div>
-                    <div class="resource">
-                        <img src="assets/food.png" alt="Food" class="resource-icon">
-                        <span id="food">0</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="game-status">
-                <p>Phase: <span id="phase">Setup</span></p>
-                <p>Last Roll: <span id="lastRoll">-</span></p>
-            </div>
+    <!-- Game UI -->
+    <div id="gameUI" class="hidden">
+        <div id="playerInfo">
+            <h2>Player: <span id="playerName"></span></h2>
+            <p>Resources:</p>
+            <ul>
+                <li>Wood: <span id="wood">0</span></li>
+                <li>Stone: <span id="stone">0</span></li>
+                <li>Food: <span id="food">0</span></li>
+            </ul>
         </div>
-        
-        <div class="action-container">
-            <div class="actions">
-                <button id="rollDice" class="button-action">Roll Dice</button>
-                <button id="buildArmy" class="button-action">Build Army (2 Food)</button>
-                <button id="buildSettlement" class="button-action">Build Settlement (2 Wood, 1 Stone)</button>
-                <button id="expandTerritory" class="button-action">Expand Territory (5 Wood, 5 Stone)</button>
-                <button id="moveArmy" class="button-action">Move Army (Once per turn)</button>
-                <button id="attack" class="button-action">Attack</button>
-                <button id="undo" class="button-action">Undo</button>
-                <button id="endTurn" class="button-action">End Turn</button>
-            </div>
-
-            <div id="actionInfo" class="action-info">
-                Select a hex to perform actions
-            </div>
+        <div id="gameStatus">
+            <p>Phase: <span id="phase"></span></p>
+            <p>Last Roll: <span id="lastRoll">-</span></p>
+            <p id="actionInfo"></p>
+        </div>
+        <div id="actions">
+            <button id="rollDice">Roll Dice</button>
+            <button id="buildArmy">Build Army (10 food)</button>
+            <button id="buildSettlement">Build Settlement (5 wood, 5 stone)</button>
+            <button id="expandTerritory">Expand Territory (3 wood, 2 stone)</button>
+            <button id="moveArmy">Move Army</button>
+            <button id="attack">Attack</button>
+            <button id="undo">Undo</button>
+            <button id="endTurn">End Turn</button>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/honeycomb-grid@3.1.8/dist/honeycomb.min.js"></script>
-    <script src="game.js"></script>
+    <!-- Include game scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/honeycomb-grid@3.1.2/dist/honeycomb.min.js"></script>
+    <script src="constants.js"></script>
+    <script src="hexBoard.js"></script>
+    <script src="player.js"></script>
+    <script src="ui.js"></script>
+    <script src="hexGame.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>

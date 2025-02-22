@@ -12,3 +12,13 @@
 - Building: Spend resources to build settlements (cost: 2 wood, 1 stone) or armies (cost: 1 food, 1 wood).
 - Combat: Compare army strength + a dice roll; winner takes the hex.
 - Trading: Offer resources to other players during your turn.
+
+# Files
+- *Index.html:* main HTML file that sets up the game interface and links to the Phaser library and game scripts.
+- *styles.css:* Basic styling for the game UI.
+- *constants.js:* Defines game constants for phases and costs.
+- *hexBoard.js:* Manages the hex grid using the Honeycomb library. Rendering is moved to Phaser, so this class only handles tile data.
+- *player.js:* Manages player data and actions.
+- *ui.js:* Manages the HTML-based UI, updated from the Phaser scene.
+- *hexGame.js:* The main game logic, now implemented as a Phaser scene.
+- *main.js:* Initializes the game and handles the start menu.
