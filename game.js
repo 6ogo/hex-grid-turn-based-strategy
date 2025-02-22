@@ -431,18 +431,19 @@ class HexGame {
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
 
-    // Convert canvas coordinates to hex grid coordinates
+    // Convert canvas coordinates to hex grid coordinates with proper inversion
     const gridX = (mouseX - this.canvas.width / 2) / this.board.scale;
-    const gridY = (mouseY - this.canvas.height / 2) / this.board.scale;
+    const gridY = (this.canvas.height / 2 - mouseY) / this.board.scale; // Fixed Y inversion
 
-    // Convert point to hex coordinates using Honeycomb.Point and Hex.fromPoint
+    // Convert point using the hex factory's coordinate system
     const point = Honeycomb.Point(gridX, gridY);
-    const fractionalHex = this.Hex().fromPoint(point);
-    const roundedHex = fractionalHex.round();
+    const hex = this.Hex().fromPoint(point);
+    const roundedHex = hex.round();
 
     // Find the tile using the rounded hex coordinates
-    const clickedTile = this.board.tiles.find((tile) =>
-      tile.hex.equals(roundedHex)
+    const clickedTile = this.board.tiles.find(tile => 
+        tile.hex.x === roundedHex.x && 
+        tile.hex.y === roundedHex.y
     );
 
     if (!clickedTile) return;
@@ -482,42 +483,62 @@ class HexGame {
     return inside;
   }
 
-handleSetupSelection(tile) {
-  if (tile.owner !== null) {
-    this.ui.showMessage("This hex is already taken!", true);
-    return;
+  handleSetupSelection(tile) {
+    if (tile.owner !== null) {
+      this.ui.showMessage("This hex is already taken!", true);
+      return;
+    }
+
+    // Check if the selected hex is adjacent to any owned hex
+    const neighbors = this.board.getNeighbors(tile.hex);
+    const isAdjacentToOwned = neighbors.some((neighbor) => {
+      const neighborTile = this.board.getTileAt(neighbor);
+      return neighborTile && neighborTile.owner !== null;
+    });
+
+    if (isAdjacentToOwned) {
+      this.ui.showMessage(
+        "Cannot choose a hex adjacent to another player's starting hex!",
+        true
+      );
+      return;
+    }
+
+    const player = this.players[this.currentPlayer];
+    player.addHex(tile);
+    tile.armies = 1;
+    tile.settlement = true;
+
+    this.state.setupPlayers.shift();
+    if (this.state.setupPlayers.length > 0) {
+      this.currentPlayer = this.state.setupPlayers[0].id;
+    } else {
+      this.state.phase = PHASES.RESOURCE_COLLECTION;
+      this.currentPlayer = 0;
+    }
+    this.updateUI();
   }
 
-  // Check if the selected hex is adjacent to any owned hex
-  const neighbors = this.board.getNeighbors(tile.hex);
-  const isAdjacentToOwned = neighbors.some((neighbor) => {
-    const neighborTile = this.board.getTileAt(neighbor);
-    return neighborTile && neighborTile.owner !== null;
-  });
-
-  if (isAdjacentToOwned) {
-    this.ui.showMessage(
-      "Cannot choose a hex adjacent to another player's starting hex!",
-      true
-    );
-    return;
+  saveState() {
+    this.previousState = {
+      board: {
+        tiles: this.board.tiles.map((t) => ({ ...t })),
+        gridSize: this.board.grid.width,
+      },
+      players: this.players.map((p) => ({
+        ...p,
+        resources: { ...p.resources },
+        hexes: p.hexes.map((t) => this.board.tiles.indexOf(t)),
+      })),
+      currentPlayer: this.currentPlayer,
+      state: JSON.parse(JSON.stringify(this.state)),
+    };
+    this.ui.setUndoAvailable(true);
   }
 
-  const player = this.players[this.currentPlayer];
-  player.addHex(tile);
-  tile.armies = 1;
-  tile.settlement = true;
-
-  this.state.setupPlayers.shift();
-  if (this.state.setupPlayers.length > 0) {
-    this.currentPlayer = this.state.setupPlayers[0].id;
-  } else {
-    this.state.phase = PHASES.RESOURCE_COLLECTION;
-    this.currentPlayer = 0;
-  }
-  this.updateUI();
-}
   handleBuildArmy(tile) {
+    this.saveState();
+
     const player = this.players[this.currentPlayer];
     if (tile.owner !== player.id) {
       this.ui.showMessage("You can only build on your own hexes!", true);
@@ -698,16 +719,29 @@ handleSetupSelection(tile) {
 
   undoLastAction() {
     if (!this.previousState) return;
-    this.state = { ...this.previousState.state };
-    this.board = new HexBoard(this.Hex, this.board.grid.width);
-    this.board.tiles = this.previousState.board.tiles.map((t) => ({
-      ...t,
-      hex: this.Hex(t.hex.x, t.hex.y),
-    }));
-    this.players = this.previousState.players.map(
-      (p) => new Player(p.id, p.name, p.color, p.resources, p.hexes)
-    );
-    this.ui.setUndoAvailable(false);
+
+    // Restore board state
+    this.board = new HexBoard(this.Hex, this.previousState.board.gridSize);
+    this.previousState.board.tiles.forEach((savedTile, i) => {
+      Object.assign(this.board.tiles[i], savedTile);
+    });
+
+    // Restore players
+    this.players = this.previousState.players.map((savedPlayer) => {
+      const player = new Player(
+        savedPlayer.id,
+        savedPlayer.name,
+        savedPlayer.color
+      );
+      player.resources = { ...savedPlayer.resources };
+      player.hexes = savedPlayer.hexes.map((i) => this.board.tiles[i]);
+      player.hasMovedArmy = savedPlayer.hasMovedArmy;
+      return player;
+    });
+
+    // Restore game state
+    this.currentPlayer = this.previousState.currentPlayer;
+    this.state = JSON.parse(JSON.stringify(this.previousState.state));
     this.updateUI();
     this.render();
   }
@@ -770,14 +804,17 @@ handleSetupSelection(tile) {
       this.ctx.restore();
 
       // Draw resource value
-      this.ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
       this.ctx.beginPath();
-      this.ctx.arc(point.x, point.y, 12, 0, Math.PI * 2);
+      this.ctx.arc(point.x, point.y, 14, 0, Math.PI * 2);
       this.ctx.fill();
-      this.ctx.fillStyle = "#000";
+      this.ctx.fillStyle = "#fff";
+      this.ctx.strokeStyle = "#000";
+      this.ctx.lineWidth = 1;
       this.ctx.font = "bold 16px Arial";
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
+      this.ctx.strokeText(tile.resourceValue, point.x, point.y);
       this.ctx.fillText(tile.resourceValue, point.x, point.y);
 
       // Draw settlement and armies
@@ -785,14 +822,21 @@ handleSetupSelection(tile) {
         this.ctx.drawImage(
           this.assets.settlement,
           point.x - 15,
-          point.y - 15,
+          point.y - 25, // Raised position
           30,
           30
         );
       }
+
       if (tile.armies > 0) {
-        this.ctx.drawImage(this.assets.army, point.x - 15, point.y + 5, 30, 30);
-        this.ctx.fillText(tile.armies, point.x, point.y + 45);
+        const armyY = tile.settlement ? point.y + 10 : point.y - 15;
+        this.ctx.drawImage(this.assets.army, point.x - 15, armyY, 30, 30);
+        // Text with better contrast
+        this.ctx.fillStyle = "#fff";
+        this.ctx.strokeStyle = "#000";
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeText(tile.armies, point.x, armyY + 35);
+        this.ctx.fillText(tile.armies, point.x, armyY + 35);
       }
 
       // Highlight selected hex
