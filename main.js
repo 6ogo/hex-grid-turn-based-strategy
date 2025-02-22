@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Handle player setup fields based on number of players
     const updateFields = () => {
         const numPlayers = parseInt(document.getElementById("numPlayers").value);
         const container = document.getElementById("playerSetup");
@@ -15,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Default player colors
     const getDefaultColor = (index) => {
         return ["#ff4444", "#44ff44", "#4444ff", "#ffff44"][index] || "#ffffff";
     };
@@ -25,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .addEventListener("change", updateFields);
     updateFields();
 
-    // Start game button handler
     document.getElementById("startGame").addEventListener("click", (e) => {
         e.preventDefault();
         const gridSize = parseInt(document.getElementById("gridSize").value);
@@ -39,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
             playersData.push({ name, color });
         }
 
-        // Validate player names and colors
         if (
             new Set(playersData.map((p) => p.name)).size !== playersData.length ||
             new Set(playersData.map((p) => p.color)).size !== playersData.length
@@ -48,12 +44,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Hide start menu and show game UI
         document.getElementById("startMenu").style.display = "none";
         document.getElementById("gameCanvas").style.display = "block";
         document.getElementById("gameUI").classList.remove("hidden");
 
-        // Phaser game configuration
+        // Updated Phaser configuration
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
@@ -64,11 +59,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
+            canvas: {
+                // Add this to optimize canvas read operations
+                willReadFrequently: true,
+            },
         };
 
-        // Start Phaser game
         const game = new Phaser.Game(config);
-        // Store game settings in registry
         game.registry.set("gridSize", gridSize);
         game.registry.set("playersData", playersData);
     });
