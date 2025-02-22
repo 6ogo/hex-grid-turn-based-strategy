@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f0f0f0;
+}
+
+#startMenu {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+#gameContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+#gameCanvas {
+    flex: 1;
+    max-width: 800px;
+    height: 600px;
+    background-color: #e0e0e0;
+}
+
+#gameUI {
+    flex: 0 0 300px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.hidden {
+    display: none;
+}
+
+#playerInfo, #gameStatus, #actions {
+    margin-bottom: 15px;
+}
+
+#playerSetup {
+    margin: 15px 0;
+}
+
+.player-field {
+    margin: 8px 0;
+}
+
+button {
+    padding: 8px 15px;
+    margin: 4px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+}
+
+#actionFeedback {
+    margin-top: 10px;
+    padding: 5px;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+/* Hover effect for hex ownership */
+.hex-hover {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.hex-hover.visible {
+    opacity: 0.7;
+}

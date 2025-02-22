@@ -4,12 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hex Strategy Game</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Include Phaser library -->
+    <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        #gameContainer {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #gameCanvas {
+            flex: 1;
+            max-width: 800px;
+            height: 600px;
+            display: none;
+        }
+        #gameUI {
+            flex: 0 0 300px;
+            margin-left: 20px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Start Menu -->
     <div id="startMenu">
         <h1>Hex Strategy Game</h1>
         <form id="gameSetup">
@@ -30,38 +48,37 @@
         </form>
     </div>
 
-    <!-- Game Canvas -->
-    <div id="gameCanvas" style="display: none;"></div>
-
-    <!-- Game UI -->
-    <div id="gameUI" class="hidden">
-        <div id="playerInfo">
-            <h2>Player: <span id="playerName"></span></h2>
-            <p>Resources:</p>
-            <ul>
-                <li>Wood: <span id="wood">0</span></li>
-                <li>Stone: <span id="stone">0</span></li>
-                <li>Food: <span id="food">0</span></li>
-            </ul>
-        </div>
-        <div id="gameStatus">
-            <p>Phase: <span id="phase"></span></p>
-            <p>Last Roll: <span id="lastRoll">-</span></p>
-            <p id="actionInfo"></p>
-        </div>
-        <div id="actions">
-            <button id="rollDice">Roll Dice</button>
-            <button id="buildArmy">Build Army (10 food)</button>
-            <button id="buildSettlement">Build Settlement (5 wood, 5 stone)</button>
-            <button id="expandTerritory">Expand Territory (3 wood, 2 stone)</button>
-            <button id="moveArmy">Move Army</button>
-            <button id="attack">Attack</button>
-            <button id="undo">Undo</button>
-            <button id="endTurn">End Turn</button>
+    <div id="gameContainer">
+        <div id="gameCanvas"></div>
+        <div id="gameUI" class="hidden">
+            <div id="playerInfo">
+                <h2>Player: <span id="playerName"></span></h2>
+                <p>Resources:</p>
+                <ul>
+                    <li>Wood: <span id="wood">0</span></li>
+                    <li>Stone: <span id="stone">0</span></li>
+                    <li>Food: <span id="food">0</span></li>
+                </ul>
+            </div>
+            <div id="gameStatus">
+                <p>Phase: <span id="phase"></span></p>
+                <p>Last Roll: <span id="lastRoll">-</span></p>
+                <p id="actionInfo"></p> <!-- For action feedback -->
+                <p id="actionFeedback"></p> <!-- New for detailed action messages -->
+            </div>
+            <div id="actions">
+                <button id="rollDice">Roll Dice</button>
+                <button id="buildArmy">Build Army (10 food)</button>
+                <button id="buildSettlement">Build Settlement (5 wood, 5 stone)</button>
+                <button id="expandTerritory">Expand Territory (3 wood, 2 stone)</button>
+                <button id="moveArmy">Move Army</button>
+                <button id="attack">Attack</button>
+                <button id="undo">Undo</button>
+                <button id="endTurn">End Turn</button>
+            </div>
         </div>
     </div>
 
-    <!-- Include game scripts -->
     <script src="https://cdn.jsdelivr.net/npm/honeycomb-grid@3.1.2/dist/honeycomb.min.js"></script>
     <script src="constants.js"></script>
     <script src="hexBoard.js"></script>

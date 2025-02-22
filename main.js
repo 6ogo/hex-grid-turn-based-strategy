@@ -48,20 +48,15 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("gameCanvas").style.display = "block";
         document.getElementById("gameUI").classList.remove("hidden");
 
-        // Updated Phaser configuration
         const config = {
-            type: Phaser.AUTO,
-            width: window.innerWidth,
-            height: window.innerHeight,
+            type: Phaser.WEBGL,
+            width: 800, // Fixed width
+            height: 600, // Fixed height
             scene: HexGame,
             parent: "gameCanvas",
             scale: {
-                mode: Phaser.Scale.RESIZE,
+                mode: Phaser.Scale.FIT, // Fit within container
                 autoCenter: Phaser.Scale.CENTER_BOTH,
-            },
-            canvas: {
-                // Add this to optimize canvas read operations
-                willReadFrequently: true,
             },
         };
 

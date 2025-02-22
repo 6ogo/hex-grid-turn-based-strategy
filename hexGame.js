@@ -1,9 +1,7 @@
 class HexGame extends Phaser.Scene {
     constructor() {
         super({ key: "HexGame" });
-        // Hex size for Honeycomb grid
-        this.HEX_SIZE = 50;
-        // Extend Honeycomb hex factory
+        this.HEX_SIZE = 35; // Increased from 25 for larger hexes
         this.Hex = Honeycomb.extendHex({
             size: this.HEX_SIZE,
             orientation: "flat",
@@ -11,7 +9,6 @@ class HexGame extends Phaser.Scene {
         this.board = null;
         this.players = [];
         this.currentPlayer = 0;
-        // Game state
         this.state = {
             phase: PHASES.SETUP_SELECTION,
             selectedHex: null,
@@ -19,11 +16,10 @@ class HexGame extends Phaser.Scene {
             dice: { die1: null, die2: null },
             setupPlayers: [],
         };
-        this.ui = new UI();
+        this.ui = new UI(this); // Pass 'this' (HexGame instance) to UI
         this.previousState = null;
     }
 
-    // Load game assets
     preload() {
         this.load.image("grass", "assets/grass-hex.png");
         this.load.image("forest", "assets/forest-hex.png");
@@ -32,73 +28,75 @@ class HexGame extends Phaser.Scene {
         this.load.image("army", "assets/army.png");
     }
 
-    // Initialize the game scene
     create() {
-        // Retrieve game settings from registry
         const gridSize = this.game.registry.get("gridSize");
         const playersData = this.game.registry.get("playersData");
 
-        // Initialize board and players
         this.board = new HexBoard(this.Hex, gridSize);
         this.players = playersData.map((p, i) => new Player(i, p.name, p.color));
         this.state.setupPlayers = [...this.players];
 
-        // Variables to calculate grid bounds for camera
-        let minX = Infinity,
-            minY = Infinity,
-            maxX = -Infinity,
-            maxY = -Infinity;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-        // Set up hex grid display using Phaser
         this.board.tiles.forEach((tile) => {
-            // Get pixel coordinates for the hex
             const point = tile.hex.toPoint();
-            // Create a container for all elements of the tile
             const container = this.add.container(point.x, point.y);
 
-            // Create hex sprite
+            // Hex sprite with fixed size (scaled to fit within hex outline)
+            const hexWidth = this.HEX_SIZE * 2; // Diameter of hex
+            const hexHeight = Math.sqrt(3) * this.HEX_SIZE; // Height of hex
             const hexSprite = this.add.sprite(0, 0, tile.type);
             hexSprite.setOrigin(0.5, 0.5);
+            hexSprite.setDisplaySize(hexWidth - 4, hexHeight - 4); // Slightly smaller than hex to show outline
             container.add(hexSprite);
 
-            // Create resource value text
+            // Ownership overlay for hover (initially invisible)
+            const ownerOverlay = this.add.rectangle(0, 0, hexWidth - 4, hexHeight - 4, 0x000000, 0);
+            ownerOverlay.setOrigin(0.5, 0.5);
+            ownerOverlay.setInteractive();
+            ownerOverlay.on("pointerover", () => this.showOwnershipHover(tile, ownerOverlay));
+            ownerOverlay.on("pointerout", () => this.hideOwnershipHover(ownerOverlay));
+            container.add(ownerOverlay);
+
+            // Resource value text (small and centered)
             tile.resourceText = this.add.text(0, 0, tile.resourceValue, {
-                fontSize: "16px",
+                fontSize: "12px", // Slightly larger text
                 color: "#fff",
                 stroke: "#000",
-                strokeThickness: 2,
+                strokeThickness: 1,
             });
             tile.resourceText.setOrigin(0.5, 0.5);
             container.add(tile.resourceText);
 
-            // Create settlement sprite (initially hidden if no settlement)
-            tile.settlementSprite = this.add.sprite(0, -25, "settlement");
+            // Settlement sprite (larger and positioned inside hex)
+            tile.settlementSprite = this.add.sprite(0, -15, "settlement"); // Adjusted Y for larger size
             tile.settlementSprite.setOrigin(0.5, 0.5);
+            tile.settlementSprite.setDisplaySize(30, 30); // Larger max size (30x30 pixels)
             tile.settlementSprite.visible = tile.settlement;
             container.add(tile.settlementSprite);
 
-            // Calculate army position based on settlement presence
-            const armyY = tile.settlement ? 10 : -15;
-            // Create army sprite (initially hidden if no armies)
+            // Army sprite (larger and positioned inside hex)
+            const armyY = tile.settlement ? 12 : -12; // Adjusted for larger size
             tile.armySprite = this.add.sprite(0, armyY, "army");
             tile.armySprite.setOrigin(0.5, 0.5);
+            tile.armySprite.setDisplaySize(22, 22); // Larger max size (22x22 pixels)
             tile.armySprite.visible = tile.armies > 0;
             container.add(tile.armySprite);
 
-            // Create army count text (initially hidden if no armies)
-            tile.armyText = this.add.text(0, armyY + 35, tile.armies, {
-                fontSize: "16px",
+            // Army count text (larger and positioned near army sprite)
+            tile.armyText = this.add.text(0, armyY + 18, tile.armies, {
+                fontSize: "10px", // Slightly larger text
                 color: "#fff",
                 stroke: "#000",
-                strokeThickness: 2,
+                strokeThickness: 1,
             });
             tile.armyText.setOrigin(0.5, 0.5);
             tile.armyText.visible = tile.armies > 0;
             container.add(tile.armyText);
 
-            // Create highlight graphics for selected hexes
+            // Highlight graphics (thin outline for selection)
             tile.highlight = this.add.graphics({ x: 0, y: 0 });
-            tile.highlight.lineStyle(4, 0xffffff, 1);
+            tile.highlight.lineStyle(2, 0xffffff, 1); // Thin white line
             const corners = tile.hex.corners();
             tile.highlight.beginPath();
             corners.forEach((corner, i) => {
@@ -110,45 +108,63 @@ class HexGame extends Phaser.Scene {
             tile.highlight.visible = false;
             container.add(tile.highlight);
 
-            // Store container in tile for reference
             tile.container = container;
 
-            // Make hex sprite interactive for clicks
+            // Interactive area matches scaled hex
             hexSprite.setInteractive();
             hexSprite.on("pointerdown", () => this.handleHexClick(tile));
 
-            // Update grid bounds for camera positioning
             minX = Math.min(minX, point.x);
             minY = Math.min(minY, point.y);
             maxX = Math.max(maxX, point.x);
             maxY = Math.max(maxY, point.y);
         });
 
-        // Set camera zoom and center to fit the grid
-        const gridWidth = maxX - minX;
-        const gridHeight = maxY - minY;
-        const zoomX = this.scale.width / gridWidth;
-        const zoomY = this.scale.height / gridHeight;
+        // Adjust camera to fit grid within 800x600 canvas, ensuring no overlap
+        const gridWidth = maxX - minX + this.HEX_SIZE * 2; // Add padding
+        const gridHeight = maxY - minY + this.HEX_SIZE * 2;
+        const zoomX = 800 / gridWidth; // Match canvas width
+        const zoomY = 600 / gridHeight; // Match canvas height
         const zoom = Math.min(zoomX, zoomY, 1);
         this.cameras.main.setZoom(zoom);
         this.cameras.main.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
 
-        // Handle window resizing
         this.scale.on("resize", () => {
-            const zoomX = this.scale.width / gridWidth;
-            const zoomY = this.scale.height / gridHeight;
+            const zoomX = 800 / gridWidth;
+            const zoomY = 600 / gridHeight;
             const zoom = Math.min(zoomX, zoomY, 1);
             this.cameras.main.setZoom(zoom);
             this.cameras.main.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
         });
 
-        // Set up UI handlers
         this.setupUIHandlers();
-        // Update UI to reflect initial state
         this.updateUI();
     }
 
-    // Set up UI button event listeners
+    showOwnershipHover(tile, overlay) {
+        if (tile.owner !== null) {
+            const player = this.players[tile.owner];
+            overlay.fillColor = Phaser.Display.Color.ValueToColor(player.color).color;
+            overlay.fillAlpha = 0.3; // Semi-transparent overlay
+            overlay.visible = true; // Use Phaser visibility instead of classList
+        }
+    }
+
+    hideOwnershipHover(overlay) {
+        overlay.fillAlpha = 0; // Reset alpha instead of using classList
+        overlay.visible = false; // Use Phaser visibility
+    }
+
+    updateTileDisplay(tile) {
+        tile.settlementSprite.visible = tile.settlement;
+        const armyY = tile.settlement ? 12 : -12;
+        tile.armySprite.y = armyY;
+        tile.armyText.y = armyY + 18;
+        tile.armySprite.visible = tile.armies > 0;
+        tile.armyText.setText(tile.armies);
+        tile.armyText.visible = tile.armies > 0;
+    }
+
     setupUIHandlers() {
         [
             "rollDice",
@@ -166,7 +182,6 @@ class HexGame extends Phaser.Scene {
         });
     }
 
-    // Handle button actions
     handleAction(action) {
         switch (action) {
             case "rollDice":
@@ -175,15 +190,15 @@ class HexGame extends Phaser.Scene {
                 break;
             case "buildArmy":
                 if (this.state.phase === PHASES.ACTION)
-                    this.setPhase(PHASES.BUILD_ARMY);
+                    this.handleBuildArmy(null); // Pass null to check globally
                 break;
             case "buildSettlement":
                 if (this.state.phase === PHASES.ACTION)
-                    this.setPhase(PHASES.BUILD_SETTLEMENT);
+                    this.handleBuildSettlement(null); // Pass null to check globally
                 break;
             case "expandTerritory":
                 if (this.state.phase === PHASES.ACTION)
-                    this.setPhase(PHASES.EXPAND_TERRITORY);
+                    this.handleExpandTerritory(null); // Pass null to check globally
                 break;
             case "moveArmy":
                 if (this.state.phase === PHASES.ACTION)
@@ -191,7 +206,7 @@ class HexGame extends Phaser.Scene {
                 break;
             case "attack":
                 if (this.state.phase === PHASES.ACTION)
-                    this.setPhase(PHASES.COMBAT);
+                    this.handleAttack(null); // Pass null to check globally
                 break;
             case "undo":
                 this.undoLastAction();
@@ -202,14 +217,12 @@ class HexGame extends Phaser.Scene {
         }
     }
 
-    // Set the current game phase and update UI
     setPhase(phase) {
         this.state.phase = phase;
         this.ui.showMessage(this.getPhaseInstruction(phase));
         this.updateUI();
     }
 
-    // Get instruction text for the current phase
     getPhaseInstruction(phase) {
         const instructions = {
             [PHASES.SETUP_SELECTION]: `${
@@ -220,15 +233,13 @@ class HexGame extends Phaser.Scene {
                 "Choose an action: build, move armies, attack, or end turn",
             [PHASES.BUILD_ARMY]: "Select a hex to build an army",
             [PHASES.BUILD_SETTLEMENT]: "Select a hex to build a settlement",
-            [PHASES.EXPAND_TERRITORY]: "Select an adjacent hex to expand territory",
+            [PHASES.EXPAND_TERRITORY]: "Select an adjacent unowned hex to expand territory",
             [PHASES.MOVE_ARMY]: "Select a hex with your army, then destination",
-            [PHASES.COMBAT]:
-                "Select a hex with your army to attack from, then enemy hex",
+            [PHASES.COMBAT]: "Select a hex with your army to attack from, then enemy hex",
         };
         return instructions[phase] || "Select a hex to perform actions";
     }
 
-    // Handle hex clicks based on the current phase
     handleHexClick(tile) {
         switch (this.state.phase) {
             case PHASES.SETUP_SELECTION:
@@ -252,13 +263,12 @@ class HexGame extends Phaser.Scene {
         }
     }
 
-    // Handle setup phase hex selection
     handleSetupSelection(tile) {
         if (tile.owner !== null) {
             this.ui.showMessage("This hex is already taken!", true);
+            this.ui.showActionFeedback("Cannot select this hex - already owned.", false);
             return;
         }
-        // Check for adjacency to other owned hexes
         const neighbors = this.board.getNeighbors(tile.hex);
         const isAdjacentToOwned = neighbors.some((neighbor) => {
             const neighborTile = this.board.getTileAt(neighbor);
@@ -269,14 +279,15 @@ class HexGame extends Phaser.Scene {
                 "Cannot choose a hex adjacent to another player's starting hex!",
                 true
             );
+            this.ui.showActionFeedback("Cannot select this hex - adjacent to owned territory.", false);
             return;
         }
         const player = this.players[this.currentPlayer];
         player.addHex(tile);
         tile.armies = 1;
         tile.settlement = true;
-        // Update tile display
         this.updateTileDisplay(tile);
+        this.ui.showActionFeedback(`Player ${player.name} claimed a starting hex!`);
         this.state.setupPlayers.shift();
         if (this.state.setupPlayers.length > 0) {
             this.currentPlayer = this.state.setupPlayers[0].id;
@@ -287,215 +298,6 @@ class HexGame extends Phaser.Scene {
         this.updateUI();
     }
 
-    // Handle building an army on a hex
-    handleBuildArmy(tile) {
-        this.saveState();
-        const player = this.players[this.currentPlayer];
-        if (tile.owner !== player.id) {
-            this.ui.showMessage("You can only build on your own hexes!", true);
-            return;
-        }
-        if (!player.canAfford(COSTS.army)) {
-            this.ui.showMessage("Not enough resources for army!", true);
-            return;
-        }
-        player.spendResources(COSTS.army);
-        tile.armies += 1;
-        this.updateTileDisplay(tile);
-        this.setPhase(PHASES.ACTION);
-        this.updateUI();
-    }
-
-    // Handle building a settlement on a hex
-    handleBuildSettlement(tile) {
-        this.saveState();
-        const player = this.players[this.currentPlayer];
-        if (tile.owner !== player.id || tile.settlement) {
-            this.ui.showMessage(
-                "You can only build settlements on your own empty hexes!",
-                true
-            );
-            return;
-        }
-        if (!player.canAfford(COSTS.settlement)) {
-            this.ui.showMessage("Not enough resources for settlement!", true);
-            return;
-        }
-        player.spendResources(COSTS.settlement);
-        tile.settlement = true;
-        this.updateTileDisplay(tile);
-        this.setPhase(PHASES.ACTION);
-        this.updateUI();
-    }
-
-    // Handle expanding territory to a new hex
-    handleExpandTerritory(tile) {
-        this.saveState();
-        const player = this.players[this.currentPlayer];
-        if (!player.canExpandTo(tile, this.board)) {
-            this.ui.showMessage("Can only expand to adjacent unowned hexes!", true);
-            return;
-        }
-        if (!player.canAfford(COSTS.territory)) {
-            this.ui.showMessage("Not enough resources to expand!", true);
-            return;
-        }
-        player.spendResources(COSTS.territory);
-        player.addHex(tile);
-        this.updateTileDisplay(tile);
-        this.setPhase(PHASES.ACTION);
-        this.updateUI();
-    }
-
-    // Handle moving armies between hexes
-    handleMoveArmy(tile) {
-        const player = this.players[this.currentPlayer];
-        if (!this.state.moveFrom) {
-            if (tile.owner !== player.id || tile.armies === 0) {
-                this.ui.showMessage("Select a hex with your army to move from", true);
-                return;
-            }
-            this.state.moveFrom = tile;
-            tile.highlight.visible = true;
-            this.ui.showMessage("Select a destination hex you own");
-        } else {
-            if (
-                !this.isValidMove(this.state.moveFrom, tile) ||
-                tile.owner !== player.id
-            ) {
-                this.ui.showMessage(
-                    "Invalid move - hexes must be adjacent and owned!",
-                    true
-                );
-                return;
-            }
-            this.saveState();
-            this.moveArmy(this.state.moveFrom, tile);
-            player.hasMovedArmy = true;
-            this.state.moveFrom.highlight.visible = false;
-            this.state.moveFrom = null;
-            this.setPhase(PHASES.ACTION);
-            this.updateUI();
-        }
-    }
-
-    // Check if a move is valid (adjacent hexes)
-    isValidMove(from, to) {
-        return this.board.getNeighbors(from.hex).some((n) => n.equals(to.hex));
-    }
-
-    // Move armies from one hex to another
-    moveArmy(from, to) {
-        to.armies += 1;
-        from.armies -= 1;
-        if (from.armies === 0 && !from.settlement) {
-            this.players[this.currentPlayer].removeHex(from);
-        }
-        this.updateTileDisplay(from);
-        this.updateTileDisplay(to);
-    }
-
-    // Handle combat actions
-    handleCombat(tile) {
-        const player = this.players[this.currentPlayer];
-        if (!this.state.moveFrom) {
-            if (tile.owner !== player.id || tile.armies === 0) {
-                this.ui.showMessage("Select a hex with your army to attack from", true);
-                return;
-            }
-            this.state.moveFrom = tile;
-            tile.highlight.visible = true;
-            this.ui.showMessage("Select an enemy hex to attack");
-        } else {
-            if (!this.isValidAttackTarget(tile)) {
-                this.ui.showMessage(
-                    "Invalid attack target - must be adjacent and enemy-owned!",
-                    true
-                );
-                return;
-            }
-            this.saveState();
-            this.performCombat(this.state.moveFrom, tile);
-            this.state.moveFrom.highlight.visible = false;
-            this.state.moveFrom = null;
-            this.setPhase(PHASES.ACTION);
-            this.updateUI();
-        }
-    }
-
-    // Check if an attack target is valid
-    isValidAttackTarget(target) {
-        return (
-            target.owner !== this.currentPlayer &&
-            this.board
-                .getNeighbors(this.state.moveFrom.hex)
-                .some((n) => n.equals(target.hex))
-        );
-    }
-
-    // Perform combat between hexes
-    performCombat(attacker, defender) {
-        const attackRoll = Math.random() * attacker.armies + 1;
-        const defendRoll = Math.random() * defender.armies + 1;
-        if (attackRoll > defendRoll) {
-            defender.owner = attacker.owner;
-            defender.armies = Math.floor(attacker.armies / 2);
-            attacker.armies = Math.ceil(attacker.armies / 2);
-        } else {
-            attacker.armies = Math.ceil(attacker.armies / 2);
-            defender.armies = Math.floor(defender.armies * 0.75);
-        }
-        this.updateTileDisplay(attacker);
-        this.updateTileDisplay(defender);
-    }
-
-    // Collect resources based on dice rolls
-    collectResources() {
-        const die1 = Math.floor(Math.random() * 6) + 1;
-        const die2 = Math.floor(Math.random() * 6) + 1;
-        this.state.dice = { die1, die2 };
-        const player = this.players[this.currentPlayer];
-
-        [die1, die2].forEach((roll) => {
-            this.board.tiles.forEach((tile) => {
-                if (tile.owner === player.id && tile.resourceValue === roll) {
-                    const bonus = tile.settlement ? 2 : 1;
-                    switch (tile.type) {
-                        case "forest":
-                            player.resources.wood += bonus;
-                            break;
-                        case "mountain":
-                            player.resources.stone += bonus;
-                            break;
-                        case "grass":
-                            player.resources.food += bonus;
-                            break;
-                    }
-                }
-            });
-        });
-
-        this.state.phase = PHASES.ACTION;
-        this.updateUI();
-    }
-
-    // End the current player's turn
-    endTurn() {
-        const player = this.players[this.currentPlayer];
-        player.hasMovedArmy = false;
-        this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
-        this.state.phase = PHASES.RESOURCE_COLLECTION;
-        this.state.moveFrom = null;
-        this.state.dice = { die1: null, die2: null };
-        this.ui.setUndoAvailable(false);
-        // Clear any highlights
-        this.board.tiles.forEach((tile) => {
-            tile.highlight.visible = false;
-        });
-        this.updateUI();
-    }
-
-    // Save the current game state for undo
     saveState() {
         this.previousState = {
             board: {
@@ -533,11 +335,285 @@ class HexGame extends Phaser.Scene {
         this.ui.setUndoAvailable(true);
     }
 
-    // Undo the last action
+    handleBuildArmy(tile) {
+        const player = this.players[this.currentPlayer];
+        if (tile) {
+            this.saveState();
+            if (tile.owner !== player.id) {
+                this.ui.showMessage("You can only build on your own hexes!", true);
+                this.ui.showActionFeedback("Cannot build army - not your hex.", false);
+                return;
+            }
+            if (!player.canAfford(COSTS.army)) {
+                this.ui.showMessage("Not enough resources for army!", true);
+                this.ui.showActionFeedback("Cannot build army - insufficient resources.", false);
+                return;
+            }
+            player.spendResources(COSTS.army);
+            tile.armies += 1;
+            this.updateTileDisplay(tile);
+            this.ui.showActionFeedback(`Player ${player.name} built an army!`);
+            this.setPhase(PHASES.ACTION);
+        } else {
+            // Check if action is possible globally
+            if (!player.hexes.some(t => player.canAfford(COSTS.army))) {
+                this.ui.showMessage("Not enough resources to build an army!", true);
+                this.ui.showActionFeedback("Cannot build army - insufficient resources.", false);
+                return;
+            }
+            this.setPhase(PHASES.BUILD_ARMY);
+        }
+        this.updateUI();
+    }
+
+    handleBuildSettlement(tile) {
+        const player = this.players[this.currentPlayer];
+        if (tile) {
+            this.saveState();
+            if (tile.owner !== player.id || tile.settlement) {
+                this.ui.showMessage(
+                    "You can only build settlements on your own empty hexes!",
+                    true
+                );
+                this.ui.showActionFeedback("Cannot build settlement - not your empty hex.", false);
+                return;
+            }
+            if (!player.canAfford(COSTS.settlement)) {
+                this.ui.showMessage("Not enough resources for settlement!", true);
+                this.ui.showActionFeedback("Cannot build settlement - insufficient resources.", false);
+                return;
+            }
+            player.spendResources(COSTS.settlement);
+            tile.settlement = true;
+            this.updateTileDisplay(tile);
+            this.ui.showActionFeedback(`Player ${player.name} built a settlement!`);
+            this.setPhase(PHASES.ACTION);
+        } else {
+            // Check if action is possible globally
+            if (!player.hexes.some(t => !t.settlement && player.canAfford(COSTS.settlement))) {
+                this.ui.showMessage("Not enough resources or no valid hex for settlement!", true);
+                this.ui.showActionFeedback("Cannot build settlement - insufficient resources or no valid hex.", false);
+                return;
+            }
+            this.setPhase(PHASES.BUILD_SETTLEMENT);
+        }
+        this.updateUI();
+    }
+
+    handleExpandTerritory(tile) {
+        const player = this.players[this.currentPlayer];
+        if (tile) {
+            this.saveState();
+            if (!player.canExpandTo(tile, this.board)) {
+                this.ui.showMessage("Can only expand to adjacent unowned hexes!", true);
+                this.ui.showActionFeedback("Cannot expand - not an adjacent unowned hex.", false);
+                return;
+            }
+            if (!player.canAfford(COSTS.territory)) {
+                this.ui.showMessage("Not enough resources to expand!", true);
+                this.ui.showActionFeedback("Cannot expand - insufficient resources.", false);
+                return;
+            }
+            player.spendResources(COSTS.territory);
+            player.addHex(tile);
+            this.updateTileDisplay(tile);
+            this.ui.showActionFeedback(`Player ${player.name} expanded territory!`);
+            this.setPhase(PHASES.ACTION);
+        } else {
+            // Check if action is possible globally
+            if (!this.ui.canExpand(player, this.board)) { // Pass board explicitly
+                this.ui.showMessage("Cannot expand - no valid adjacent unowned hex or insufficient resources!", true);
+                this.ui.showActionFeedback("Cannot expand - no valid adjacent unowned hex or insufficient resources.", false);
+                return;
+            }
+            this.setPhase(PHASES.EXPAND_TERRITORY);
+        }
+        this.updateUI();
+    }
+
+    handleMoveArmy(tile) {
+        const player = this.players[this.currentPlayer];
+        if (!this.state.moveFrom) {
+            if (tile.owner !== player.id || tile.armies === 0) {
+                this.ui.showMessage("Select a hex with your army to move from", true);
+                this.ui.showActionFeedback("Cannot move - no army in this hex or not your hex.", false);
+                return;
+            }
+            this.state.moveFrom = tile;
+            tile.highlight.visible = true;
+            this.ui.showMessage("Select a destination hex you own");
+        } else {
+            if (
+                !this.isValidMove(this.state.moveFrom, tile) ||
+                tile.owner !== player.id
+            ) {
+                this.ui.showMessage(
+                    "Invalid move - hexes must be adjacent and owned!",
+                    true
+                );
+                this.ui.showActionFeedback("Cannot move - invalid destination.", false);
+                return;
+            }
+            this.saveState();
+            this.moveArmy(this.state.moveFrom, tile);
+            player.hasMovedArmy = true;
+            this.state.moveFrom.highlight.visible = false;
+            this.state.moveFrom = null;
+            this.ui.showActionFeedback(`Player ${player.name} moved an army!`);
+            this.setPhase(PHASES.ACTION);
+            this.updateUI();
+        }
+    }
+
+    isValidMove(from, to) {
+        return this.board.getNeighbors(from.hex).some((n) => n.equals(to.hex));
+    }
+
+    moveArmy(from, to) {
+        to.armies += 1;
+        from.armies -= 1;
+        if (from.armies === 0 && !from.settlement) {
+            this.players[this.currentPlayer].removeHex(from);
+        }
+        this.updateTileDisplay(from);
+        this.updateTileDisplay(to);
+    }
+
+    handleAttack(tile) {
+        const player = this.players[this.currentPlayer];
+        if (tile) {
+            this.saveState();
+            if (!this.isValidAttackTarget(tile)) {
+                this.ui.showMessage(
+                    "Invalid attack target - must be adjacent and enemy-owned!",
+                    true
+                );
+                this.ui.showActionFeedback("Cannot attack - not an adjacent enemy hex.", false);
+                return;
+            }
+            this.performCombat(this.state.moveFrom, tile);
+            this.state.moveFrom.highlight.visible = false;
+            this.state.moveFrom = null;
+            this.ui.showActionFeedback(`Player ${player.name} attacked an enemy territory!`);
+            this.setPhase(PHASES.ACTION);
+        } else {
+            // Check if action is possible globally
+            if (!this.ui.canAttack(player, this.board)) { // Pass board explicitly
+                this.ui.showMessage("Cannot attack - no armies or no enemy targets!", true);
+                this.ui.showActionFeedback("Cannot attack - no armies or no enemy targets.", false);
+                return;
+            }
+            this.setPhase(PHASES.COMBAT);
+        }
+        this.updateUI();
+    }
+
+    isValidAttackTarget(target) {
+        const player = this.players[this.currentPlayer];
+        return (
+            target.owner !== player.id && // Ensure it's an enemy
+            target.owner !== null && // Not unowned (for expansion)
+            this.board
+                .getNeighbors(target.hex)
+                .some((n) => {
+                    const neighborTile = this.board.getTileAt(n);
+                    return neighborTile && neighborTile.owner === player.id && neighborTile.armies > 0;
+                })
+        );
+    }
+
+    handleCombat(tile) {
+        const player = this.players[this.currentPlayer];
+        if (!this.state.moveFrom) {
+            if (tile.owner !== player.id || tile.armies === 0) {
+                this.ui.showMessage("Select a hex with your army to attack from", true);
+                this.ui.showActionFeedback("Cannot attack - no army in this hex or not your hex.", false);
+                return;
+            }
+            this.state.moveFrom = tile;
+            tile.highlight.visible = true;
+            this.ui.showMessage("Select an enemy hex to attack");
+        } else {
+            if (!this.isValidAttackTarget(tile)) {
+                this.ui.showMessage(
+                    "Invalid attack target - must be adjacent and enemy-owned!",
+                    true
+                );
+                this.ui.showActionFeedback("Cannot attack - not an adjacent enemy hex.", false);
+                return;
+            }
+            this.performCombat(this.state.moveFrom, tile);
+            this.state.moveFrom.highlight.visible = false;
+            this.state.moveFrom = null;
+            this.ui.showActionFeedback(`Player ${player.name} attacked an enemy territory!`);
+            this.setPhase(PHASES.ACTION);
+            this.updateUI();
+        }
+    }
+
+    performCombat(attacker, defender) {
+        const attackRoll = Math.random() * attacker.armies + 1;
+        const defendRoll = Math.random() * defender.armies + 1;
+        if (attackRoll > defendRoll) {
+            defender.owner = attacker.owner;
+            defender.armies = Math.floor(attacker.armies / 2);
+            attacker.armies = Math.ceil(attacker.armies / 2);
+        } else {
+            attacker.armies = Math.ceil(attacker.armies / 2);
+            defender.armies = Math.floor(defender.armies * 0.75);
+        }
+        this.updateTileDisplay(attacker);
+        this.updateTileDisplay(defender);
+    }
+
+    collectResources() {
+        const die1 = Math.floor(Math.random() * 6) + 1;
+        const die2 = Math.floor(Math.random() * 6) + 1;
+        this.state.dice = { die1, die2 };
+        const player = this.players[this.currentPlayer];
+
+        [die1, die2].forEach((roll) => {
+            this.board.tiles.forEach((tile) => {
+                if (tile.owner === player.id && tile.resourceValue === roll) {
+                    const bonus = tile.settlement ? 2 : 1;
+                    switch (tile.type) {
+                        case "forest":
+                            player.resources.wood += bonus;
+                            break;
+                        case "mountain":
+                            player.resources.stone += bonus;
+                            break;
+                        case "grass":
+                            player.resources.food += bonus;
+                            break;
+                    }
+                }
+            });
+        });
+
+        this.ui.showActionFeedback(`Player ${player.name} collected resources!`);
+        this.state.phase = PHASES.ACTION;
+        this.updateUI();
+    }
+
+    endTurn() {
+        const player = this.players[this.currentPlayer];
+        player.hasMovedArmy = false;
+        this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+        this.state.phase = PHASES.RESOURCE_COLLECTION;
+        this.state.moveFrom = null;
+        this.state.dice = { die1: null, die2: null };
+        this.ui.setUndoAvailable(false);
+        this.board.tiles.forEach((tile) => {
+            tile.highlight.visible = false;
+        });
+        this.ui.showActionFeedback(`Player ${player.name}'s turn ended.`);
+        this.updateUI();
+    }
+
     undoLastAction() {
         if (!this.previousState) return;
 
-        // Restore board state
         this.board.tiles.forEach((tile, i) => {
             const savedTile = this.previousState.board.tiles[i];
             tile.type = savedTile.type;
@@ -547,7 +623,6 @@ class HexGame extends Phaser.Scene {
             tile.settlement = savedTile.settlement;
         });
 
-        // Restore players
         this.players.forEach((player, i) => {
             const savedPlayer = this.previousState.players[i];
             player.resources = { ...savedPlayer.resources };
@@ -555,7 +630,6 @@ class HexGame extends Phaser.Scene {
             player.hasMovedArmy = savedPlayer.hasMovedArmy;
         });
 
-        // Restore game state
         this.currentPlayer = this.previousState.currentPlayer;
         this.state = {
             phase: this.previousState.state.phase,
@@ -575,12 +649,10 @@ class HexGame extends Phaser.Scene {
             }),
         };
 
-        // Update display for all tiles
         this.board.tiles.forEach((tile) => {
             this.updateTileDisplay(tile);
         });
 
-        // Update highlights
         this.board.tiles.forEach((tile) => {
             tile.highlight.visible = false;
         });
@@ -588,27 +660,16 @@ class HexGame extends Phaser.Scene {
             this.state.moveFrom.highlight.visible = true;
         }
 
+        this.ui.showActionFeedback("Last action undone.");
         this.updateUI();
     }
 
-    // Update the display of a tile in Phaser
-    updateTileDisplay(tile) {
-        tile.settlementSprite.visible = tile.settlement;
-        const armyY = tile.settlement ? 10 : -15;
-        tile.armySprite.y = armyY;
-        tile.armyText.y = armyY + 35;
-        tile.armySprite.visible = tile.armies > 0;
-        tile.armyText.setText(tile.armies);
-        tile.armyText.visible = tile.armies > 0;
-    }
-
-    // Update the UI to reflect current game state
     updateUI() {
         const player = this.players[this.currentPlayer];
         this.ui.updatePlayerInfo(player);
         this.ui.updatePhase(this.state.phase);
         this.ui.updateLastRoll(this.state.dice.die1, this.state.dice.die2);
-        this.ui.updateButtonStates(this.state.phase, player, COSTS);
+        this.ui.updateButtonStates(this.state.phase, player, COSTS, this.board); // Pass board explicitly
         this.ui.showMessage(this.getPhaseInstruction(this.state.phase));
     }
 }
