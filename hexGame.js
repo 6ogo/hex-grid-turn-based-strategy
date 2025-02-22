@@ -18,6 +18,14 @@ class HexGame extends Phaser.Scene {
         };
         this.ui = new UI(this); // Pass 'this' (HexGame instance) to UI
         this.previousState = null;
+        // Zoom properties
+        this.minZoom = 0.8; // Adjusted from 0.5 to prevent excessive zoom out
+        this.maxZoom = 2.0; // Keep max zoom at 200%
+        this.zoomSpeed = 0.05; // Slower zoom speed (was 0.1)
+        // Drag properties
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
     }
 
     preload() {
@@ -120,15 +128,63 @@ class HexGame extends Phaser.Scene {
             maxY = Math.max(maxY, point.y);
         });
 
-        // Adjust camera to fit grid within 800x600 canvas, ensuring no overlap
-        const gridWidth = maxX - minX + this.HEX_SIZE * 2; // Add padding
-        const gridHeight = maxY - minY + this.HEX_SIZE * 2;
-        const zoomX = 800 / gridWidth; // Match canvas width
-        const zoomY = 600 / gridHeight; // Match canvas height
-        const zoom = Math.min(zoomX, zoomY, 1);
-        this.cameras.main.setZoom(zoom);
-        this.cameras.main.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
-
+                // Adjust camera to fit grid within 800x600 canvas
+                const gridWidth = maxX - minX + this.HEX_SIZE * 2;
+                const gridHeight = maxY - minY + this.HEX_SIZE * 2;
+                const zoomX = 800 / gridWidth;
+                const zoomY = 600 / gridHeight;
+                const initialZoom = Math.min(zoomX, zoomY, 1);
+                this.cameras.main.setZoom(initialZoom);
+                this.cameras.main.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
+        
+                // Mouse wheel zoom
+                this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+                    const camera = this.cameras.main;
+                    const currentZoom = camera.zoom;
+                    const zoomChange = -deltaY * this.zoomSpeed;
+                    let newZoom = currentZoom + zoomChange;
+        
+                    // Clamp zoom within bounds
+                    newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
+        
+                    if (newZoom !== currentZoom) {
+                        const worldPoint = camera.getWorldPoint(pointer.x, pointer.y);
+                        camera.zoomTo(newZoom, 200, 'Linear', false, (cam, progress) => {
+                            if (progress === 1) {
+                                camera.pan(worldPoint.x, worldPoint.y, 0);
+                            }
+                        });
+                    }
+                });
+        
+                // Drag-to-pan functionality
+                this.input.on('pointerdown', (pointer) => {
+                    if (pointer.rightButtonDown()) return; // Ignore right-clicks (optional)
+                    this.isDragging = true;
+                    this.dragStartX = pointer.x;
+                    this.dragStartY = pointer.y;
+                    this.cameras.main.stopFollow(); // Stop any camera following
+                });
+        
+                this.input.on('pointermove', (pointer) => {
+                    if (this.isDragging) {
+                        const camera = this.cameras.main;
+                        const deltaX = (this.dragStartX - pointer.x) / camera.zoom;
+                        const deltaY = (this.dragStartY - pointer.y) / camera.zoom;
+                        camera.scrollX += deltaX;
+                        camera.scrollY += deltaY;
+                        this.dragStartX = pointer.x;
+                        this.dragStartY = pointer.y;
+                    }
+                });
+        
+                this.input.on('pointerup', () => {
+                    this.isDragging = false;
+                });
+        
+                this.input.on('pointerout', () => {
+                    this.isDragging = false; // Stop dragging if mouse leaves canvas
+                });
         this.scale.on("resize", () => {
             const zoomX = 800 / gridWidth;
             const zoomY = 600 / gridHeight;
